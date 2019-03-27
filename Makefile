@@ -1,4 +1,4 @@
-PROGRAM = tetris
+PROGRAM = tetriks
 CC      = gcc
 CFLAGS  = -g -ansi -std=c11 -Wall -I/usr/X11R6/include -I/usr/pkg/include
 LDFLAGS = -L/usr/X11R6/lib -L/usr/pkg/lib
