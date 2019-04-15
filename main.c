@@ -1,7 +1,7 @@
 #define fieldWidth 12
 #define fieldHight 20
 #define timeToSlideMax 10
-#define speed 10
+#define speed 5
 #include <stdlib.h>
 #include <math.h>
 #include <GL/glut.h>
@@ -17,6 +17,7 @@ static int timer_active;
 /* Deklaracije callback funkcija. */
 
 tetrisPiece trenutnoPadajuci;
+
 static void on_keyboard(unsigned char key, int x, int y);
 static void on_reshape(int width, int height);
 static void on_timer(int value);
@@ -27,134 +28,31 @@ int fieldMatrixWall[fieldWidth + 2][fieldHight + 1] = {0}; //matrix of 1s and 0s
 int timeToSlideUsed = 0;
 int keyIsPressed = 0;
 int moveDown = 0;
-tetrisPiece rotatePiece(tetrisPiece toBeRotated)
-{
-    tetrisPiece returnMe = toBeRotated;
-    rotateMatrix(toBeRotated.blockMatrix, 1, returnMe.blockMatrix);
-    return returnMe;
-}
-tetrisPiece newTetrisPiece()
-{
-    tetrisPiece toBeReturned = {(int)rand() % 7 + 1, 0, fieldWidth / 2 - 1, fieldHight};
-    int i, j;
-    switch (toBeReturned.type)
-    {
-    case none:
-        break;
-    case O:
-    {
-        int nonRotatedMatrix[4][4] = {{0, 0, 0, 0},
-                                      {0, 1, 1, 0},
-                                      {0, 1, 1, 0},
-                                      {0, 0, 0, 0}};
-        for (i = 0; i < 4; i++)
-            for (j = 0; j < 4; j++)
-                toBeReturned.blockMatrix[i][j] = nonRotatedMatrix[i][j];
-        break;
-    }
-    case L:
-    {
-        int nonRotatedMatrix[4][4] = {{0, 1, 0, 0},
-                                      {0, 1, 0, 0},
-                                      {0, 1, 1, 0},
-                                      {0, 0, 0, 0}};
-        for (i = 0; i < 4; i++)
-            for (j = 0; j < 4; j++)
-                toBeReturned.blockMatrix[i][j] = nonRotatedMatrix[i][j];
-        break;
-    }
-    case Z:
-    {
-        int nonRotatedMatrix[4][4] = {{0, 0, 1, 0},
-                                      {0, 1, 1, 0},
-                                      {0, 1, 0, 0},
-                                      {0, 0, 0, 0}};
-        for (i = 0; i < 4; i++)
-            for (j = 0; j < 4; j++)
-                toBeReturned.blockMatrix[i][j] = nonRotatedMatrix[i][j];
-        break;
-    }
-    case T:
-    {
-        int nonRotatedMatrix[4][4] = {{0, 1, 0, 0},
-                                      {1, 1, 1, 0},
-                                      {0, 0, 0, 0},
-                                      {0, 0, 0, 0}};
-        for (i = 0; i < 4; i++)
-            for (j = 0; j < 4; j++)
-                toBeReturned.blockMatrix[i][j] = nonRotatedMatrix[i][j];
-        break;
-    }
-    case I:
-    {
-        int nonRotatedMatrix[4][4] = {{0, 1, 0, 0},
-                                      {0, 1, 0, 0},
-                                      {0, 1, 0, 0},
-                                      {0, 1, 0, 0}};
-        for (i = 0; i < 4; i++)
-            for (j = 0; j < 4; j++)
-                toBeReturned.blockMatrix[i][j] = nonRotatedMatrix[i][j];
-        break;
-    }
-    case J:
-    {
-        int nonRotatedMatrix[4][4] = {{0, 1, 0, 0},
-                                      {0, 1, 0, 0},
-                                      {1, 1, 0, 0},
-                                      {0, 0, 0, 0}};
-        for (i = 0; i < 4; i++)
-            for (j = 0; j < 4; j++)
-                toBeReturned.blockMatrix[i][j] = nonRotatedMatrix[i][j];
-        break;
-    }
-    case S:
-    {
-        int nonRotatedMatrix[4][4] = {{0, 0, 0, 0},
-                                      {0, 1, 1, 0},
-                                      {1, 1, 0, 0},
-                                      {0, 0, 0, 0}};
-        for (i = 0; i < 4; i++)
-            for (j = 0; j < 4; j++)
-                toBeReturned.blockMatrix[i][j] = nonRotatedMatrix[i][j];
-        break;
-    }
-    }
-    return toBeReturned;
-}
-void insertPieceIntoField(tetrisPiece piece, int matrix[fieldWidth][fieldHight])
-{
-    int i, j;
-    for (i = 0; i < 4; i++)
-        for (j = 0; j < 4; j++)
-            if (piece.blockMatrix[j][i])
-                matrix[piece.xPosition + i - 1][piece.yPosition - j - 1] = piece.blockMatrix[j][i] * piece.type;
-}
-void insertPieceIntoWall(tetrisPiece piece, int wall[fieldWidth + 2][fieldHight + 1])
-{
-    int i, j;
-    for (i = 0; i < 4; i++)
-        for (j = 0; j < 4; j++)
-            if (piece.blockMatrix[j][i])
-                wall[piece.xPosition + i][piece.yPosition - j] = 1; //BUG
-}
 
-void takeOutTetrisPiece(tetrisPiece piece, int matrix[fieldWidth][fieldHight])
+int checkIfFiled(int matrix[fieldWidth][fieldHight], int matrixWall[fieldWidth + 2][fieldHight + 1])
 {
-    int i, j;
-    for (i = 0; i < 4; i++)
-        for (j = 0; j < 4; j++)
-            if (piece.blockMatrix[j][i])
-                matrix[piece.xPosition + i - 1][piece.yPosition - j - 1] = 0;
-}
-int doesThePieceHitTheWall(tetrisPiece piece, int wall[fieldWidth + 2][fieldHight + 1])
-{
-    int i, j;
-    for (i = 0; i < 4; i++)
-        for (j = 0; j < 4; j++)
-            if (piece.blockMatrix[j][i] && wall[piece.xPosition + i][piece.yPosition - j]) //BUG
-                return 1;
+    int i,j,k,ind;
+    for(i = 0; i < fieldHight; i++)
+        {
+            ind = 1;
+            for( j = 0; j < fieldWidth; j++)
+                if(!matrix[j][i])
+                    ind = 0;
+            if(ind) //Ono sto se desi kad nestane red
+                {
+                    for(k = i; k < fieldHight -1; k++)
+                        for( j = 0; j < fieldWidth; j++)
+                            {
+                                matrix[j][k] = matrix[j][k+1];
+                                matrixWall[j+1][k+1] = matrixWall[j+1][k+2];
+                            }
+                    for( j = 0; j < fieldWidth; j++)
+                        matrix[j][fieldHight-1] = 0;
+                }
+        }
     return 0;
 }
+
 int main(int argc, char **argv)
 {
     srand(time(NULL));
@@ -236,7 +134,7 @@ void SpecialInput(int key, int x, int y)
             {
                 takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
                 trenutnoPadajuci = checker;
-                insertPieceIntoField(trenutnoPadajuci,fieldMatrix);
+                insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
             }
             keyIsPressed = 0;
         }
@@ -249,31 +147,32 @@ void SpecialInput(int key, int x, int y)
         if (!keyIsPressed)
         {
             keyIsPressed = 1;
-        checker = trenutnoPadajuci;
-        checker.xPosition = checker.xPosition - 1;
-        if (!doesThePieceHitTheWall(checker, fieldMatrixWall))
-        {
-            takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
-            trenutnoPadajuci = checker;
-            insertPieceIntoField(trenutnoPadajuci,fieldMatrix);
-        }
-        keyIsPressed = 0;
+            checker = trenutnoPadajuci;
+            checker.xPosition = checker.xPosition - 1;
+            if (!doesThePieceHitTheWall(checker, fieldMatrixWall))
+            {
+                takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
+                trenutnoPadajuci = checker;
+                insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
+            }
+            keyIsPressed = 0;
         }
         break;
     }
     case GLUT_KEY_RIGHT:
     {
-        if(!keyIsPressed){
-            keyIsPressed=1;
-        checker = trenutnoPadajuci;
-        checker.xPosition = checker.xPosition + 1;
-        if (!doesThePieceHitTheWall(checker, fieldMatrixWall))
+        if (!keyIsPressed)
         {
-            takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
-            trenutnoPadajuci = checker;
-            insertPieceIntoField(trenutnoPadajuci,fieldMatrix);
-        }
-        keyIsPressed=0;
+            keyIsPressed = 1;
+            checker = trenutnoPadajuci;
+            checker.xPosition = checker.xPosition + 1;
+            if (!doesThePieceHitTheWall(checker, fieldMatrixWall))
+            {
+                takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
+                trenutnoPadajuci = checker;
+                insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
+            }
+            keyIsPressed = 0;
         }
         break;
     }
@@ -288,30 +187,31 @@ static void on_timer(int value)
         return;
     //takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
     moveDown++;
-    if(moveDown == speed)
+    if (moveDown == speed)
     {
-    moveDown = 0;
-    trenutnoPadajuci.yPosition = trenutnoPadajuci.yPosition - 1;
-    if (doesThePieceHitTheWall(trenutnoPadajuci, fieldMatrixWall))
-    {
-        timeToSlideUsed++;
-        trenutnoPadajuci.yPosition = trenutnoPadajuci.yPosition + 1;
-        if (timeToSlideUsed == timeToSlideMax)
-        {
-            takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
-            insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
-            insertPieceIntoWall(trenutnoPadajuci, fieldMatrixWall);
-            trenutnoPadajuci = newTetrisPiece();
-        }
-    }
-    else
-    {
-        trenutnoPadajuci.yPosition = trenutnoPadajuci.yPosition + 1;
-        takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
-        timeToSlideUsed = 0;
+        moveDown = 0;
         trenutnoPadajuci.yPosition = trenutnoPadajuci.yPosition - 1;
-        insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
-    }
+        if (doesThePieceHitTheWall(trenutnoPadajuci, fieldMatrixWall))
+        {
+            timeToSlideUsed++;
+            trenutnoPadajuci.yPosition = trenutnoPadajuci.yPosition + 1;
+            if (timeToSlideUsed == timeToSlideMax)
+            { 
+                takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
+                insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
+                insertPieceIntoWall(trenutnoPadajuci, fieldMatrixWall);//proverava da li je kraj igre
+                checkIfFiled(fieldMatrix, fieldMatrixWall);
+                trenutnoPadajuci = newTetrisPiece();
+            }
+        }
+        else
+        {
+            trenutnoPadajuci.yPosition = trenutnoPadajuci.yPosition + 1;
+            takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
+            timeToSlideUsed = 0;
+            trenutnoPadajuci.yPosition = trenutnoPadajuci.yPosition - 1;
+            insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
+        }
     }
     /* Forsira se ponovno iscrtavanje prozora. */
     glutPostRedisplay();
