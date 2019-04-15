@@ -250,7 +250,7 @@ void insertPieceIntoWall(tetrisPiece piece, int wall[fieldWidth + 2][fieldHight 
         for (j = 0; j < 4; j++)
             if (piece.blockMatrix[j][i])
             {
-                if(piece.yPosition-j+1>=fieldHight)
+                if(piece.yPosition-j>=fieldHight)
                     exit(1);//BUG NA KRAJU IGRE!!!
                 else
                     wall[piece.xPosition + i][piece.yPosition - j] = 1; //BUG NA KRAJU IGRE!!!
