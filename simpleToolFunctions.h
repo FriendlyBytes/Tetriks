@@ -2,5 +2,4 @@
 #define SIMPLETOOLS_H
 
 
-
 #endif

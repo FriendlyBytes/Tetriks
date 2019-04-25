@@ -1,6 +1,4 @@
-#define fieldWidth 12
-#define fieldHight 20
-#define timeToSlideMax 10
+#define timeToSlideMax 20
 #define speed 5
 #include <stdlib.h>
 #include <math.h>
@@ -25,10 +23,11 @@ static void on_display(void);
 static void SpecialInput(int key, int x, int y);
 int fieldMatrix[fieldWidth][fieldHight] = {};              //matrix which will hold colors of the tetris fields
 int fieldMatrixWall[fieldWidth + 2][fieldHight + 1] = {0}; //matrix of 1s and 0s which keeps track of where new pieces can't fall
-int timeToSlideUsed = 0;
-int keyIsPressed = 0;
+int timeToSlideUsed = 0; //vreme koje prodje izmedju dodirivanja bloka sa donjim blokom i uklapanja u tabelu FIXME LEPSE NAPISI OVAJ KOMENTAR
+int keyIsPressed = 0; 
 int moveDown = 0;
 
+/*funkcija koja proverava da li je popunjen neki red i brise popunjene redove*/
 int checkIfFiled(int matrix[fieldWidth][fieldHight], int matrixWall[fieldWidth + 2][fieldHight + 1])
 {
     int i,j,k,ind;
@@ -52,7 +51,18 @@ int checkIfFiled(int matrix[fieldWidth][fieldHight], int matrixWall[fieldWidth +
         }
     return 0;
 }
-
+int checkIfEndOfGame(int matrixWall[fieldWidth + 2][fieldHight + 1])
+{
+    int i;
+    for(i = 1; i < fieldWidth + 1; i++)
+        if(matrixWall[i][fieldHight-4])
+            return 1;
+    return 0;
+}
+/*TODO:
+rotacija u kontra smeru
+bodovi
+zvuk */
 int main(int argc, char **argv)
 {
     srand(time(NULL));
@@ -185,7 +195,9 @@ static void on_timer(int value)
     /* Proverava se da li callback dolazi od odgovarajuceg tajmera. */
     if (value != 0)
         return;
-    //takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
+    if (checkIfEndOfGame(fieldMatrixWall))
+        timer_active = 0;
+    
     moveDown++;
     if (moveDown == speed)
     {
@@ -199,7 +211,7 @@ static void on_timer(int value)
             { 
                 takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
                 insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
-                insertPieceIntoWall(trenutnoPadajuci, fieldMatrixWall);//proverava da li je kraj igre
+                insertPieceIntoWall(trenutnoPadajuci,fieldMatrixWall);
                 checkIfFiled(fieldMatrix, fieldMatrixWall);
                 trenutnoPadajuci = newTetrisPiece();
             }
@@ -221,6 +233,7 @@ static void on_timer(int value)
         glutTimerFunc(1, on_timer, 0);
 }
 
+
 static void on_reshape(int width, int height)
 {
     /* Postavlja se viewport. */
@@ -241,8 +254,10 @@ static void on_display(void)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     gluLookAt(0, 0, 1000, 0, 0, 0, 0, 1, 0);
-    drawTetrisField(50, fieldMatrix);
+    drawTetrisField(50,fieldMatrix);
 
     /* Postavlja se nova slika u prozor. */
     glutSwapBuffers();
 }
+
+
