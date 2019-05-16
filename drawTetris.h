@@ -1,6 +1,6 @@
 #ifndef DRAWTETRIS_H
 #define DRAWTETRIS_H
-#define fieldHight 14 //The real size +4
+#define fieldHight 24 //The real size +4
 #define fieldWidth 12
 #define blend_factor 0.7
 #define yellow 1
@@ -22,7 +22,7 @@
 void drawTetrisWireBlock(double size, double r, double g, double b, double lineWidth)
 {
     glDisable(GL_DEPTH_TEST);
-    glColor3f(r, g, b);
+    glColor4f(r, g, b,0.5);
     glLineWidth(lineWidth);
     glutWireCube(size);
     glEnable(GL_DEPTH_TEST);
@@ -30,12 +30,10 @@ void drawTetrisWireBlock(double size, double r, double g, double b, double lineW
 
 void drawTetrisSolidBlock(double size, double r, double g, double b, double blend)
 {
-    glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glColor4f(r, g, b, blend);
     glutSolidCube(size);
-    glDisable(GL_BLEND);
 }
 
 static void drawTetrisColoredSolidBlock(double size, int color, double blend)
@@ -98,8 +96,10 @@ static void drawTetrisField(int size, int matrix[fieldWidth][fieldHight])
 {
     int i, j;
     glPushMatrix();
+
     glTranslatef(-size * fieldWidth / 2, -size * (fieldHight -4) / 2, 0);
     glPushMatrix();
+    //crta sivu mrezu u pozadini
     for (i = 0; i < fieldWidth; i++)
     {
         glPushMatrix();
@@ -116,7 +116,9 @@ static void drawTetrisField(int size, int matrix[fieldWidth][fieldHight])
 
     glPushMatrix();
     glTranslatef(-size * fieldWidth / 2, -size * (fieldHight-4) / 2, 0);
+    
     glPushMatrix();
+    //crta providne obojene kocke
     for (i = 0; i < fieldWidth; i++)
     {
         glPushMatrix();
@@ -134,11 +136,14 @@ static void drawTetrisField(int size, int matrix[fieldWidth][fieldHight])
 
     glPushMatrix();
     glTranslatef(-size * fieldWidth / 2, -size * (fieldHight-4) / 2, 0);
+    
+    //DONJA POLOVINA
     glPushMatrix();
-    for (i = 0; i < fieldWidth; i++)
+    //crta donji levi ugao obojene zice
+    for (i = 0; i < fieldWidth/2; i++)
     {
         glPushMatrix();
-        for (j = 0; j < fieldHight-4; j++)//for (j = 0; j < fieldHight; j++)
+        for (j = 0; j < (fieldHight-4)/2; j++)//for (j = 0; j < fieldHight; j++)
         {
             if (matrix[i][j])
                 drawTetrisColoredWireBlock(size, matrix[i][j], 2.5);
@@ -146,6 +151,60 @@ static void drawTetrisField(int size, int matrix[fieldWidth][fieldHight])
         }
         glPopMatrix();
         glTranslatef(size, 0, 0);
+    }
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(size*(fieldWidth-1),0,0);
+    //crta donji desni ugao obojene zice
+    for (i = fieldWidth-1; i >= fieldWidth/2; i--)
+    {
+        glPushMatrix();
+        for (j = 0; j < (fieldHight-4)/2; j++)//for (j = 0; j < fieldHight; j++)
+        {
+            if (matrix[i][j])
+                drawTetrisColoredWireBlock(size, matrix[i][j], 2.5);
+            glTranslatef(0, size, 0);
+        }
+        glPopMatrix();
+        glTranslatef(-size, 0, 0);
+    }
+    glPopMatrix();
+
+    //GORNJA POLOVINA
+    glPushMatrix();
+    //crta gornji levi ugao obojene zice
+    glTranslatef(0,size*(fieldHight-4-1),0);
+    for (i = 0; i < fieldWidth/2; i++)
+    {
+        glPushMatrix();
+        for (j = fieldHight-4-1; j >= (fieldHight-4)/2; j--)//for (j = 0; j < fieldHight; j++)
+        {
+            if (matrix[i][j])
+                drawTetrisColoredWireBlock(size, matrix[i][j], 2.5);
+            glTranslatef(0, -size, 0);
+        }
+        glPopMatrix();
+        glTranslatef(size, 0, 0);
+    }
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(size*(fieldWidth-1),0,0);
+
+    glTranslatef(0,size*(fieldHight-4-1),0);
+    //crta gornji desni ugao obojene zice
+    for (i = fieldWidth-1; i >= (fieldWidth-4)/2; i--)
+    {
+        glPushMatrix();
+        for (j = fieldHight-4-1; j >= (fieldHight-4)/2; j--)
+        {
+            if (matrix[i][j])
+                drawTetrisColoredWireBlock(size, matrix[i][j], 2.5);
+            glTranslatef(0, -size, 0);
+        }
+        glPopMatrix();
+        glTranslatef(-size, 0, 0);
     }
     glPopMatrix();
     glPopMatrix();
