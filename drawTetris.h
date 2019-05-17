@@ -331,11 +331,37 @@ void takeOutTetrisPiece(tetrisPiece piece, int matrix[fieldWidth][fieldHight])
                 if(piece.xPosition+i-1<fieldWidth && piece.yPosition-j-1<fieldHight)
                 matrix[piece.xPosition + i - 1][piece.yPosition - j - 1] = 0;
 }
+void drawOnePiece(int color,int matrix[4][4],int size, float angle)
+{
+    glPushMatrix();
+    int i,j;
+    size *= 0.75;
+    glPushMatrix();
+    glRotatef(angle,0,1,0);
+    glTranslatef(-2*size,0,0);
+    glRotatef(90,0,0,1);
+    for(j = 0; j < 4; j++)
+        {
+            for(i = 0; i < 4; i++)
+            {
+                if(matrix[i][j])
+                {
+                drawTetrisColoredSolidBlock(size, color, 0.3);
+                drawTetrisColoredWireBlock(size, color,3);
+                }
+            glTranslatef(-size,0,0);
+            }
+            glTranslatef(size*4,0,0);
+            glTranslatef(0,-size,0);
+        }
+    glPopMatrix();
+    glPopMatrix();
+}
 int doesThePieceHitTheWall(tetrisPiece piece, int wall[fieldWidth + 2][fieldHight + 1])
 {
     int i, j;
-    for (i = 0; i < 4; i++)
-        for (j = 0; j < 4; j++)
+    for (j = 0; j < 4; j++)
+        for (i = 0; i < 4; i++)
         {
             if (piece.yPosition - j <= fieldHight)
                 if (piece.blockMatrix[j][i] && wall[piece.xPosition + i][piece.yPosition - j]) //BUG

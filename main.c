@@ -38,6 +38,7 @@ clock_t timeOfFalling;
 char scoreString[30];
 char linesString[30];
 char levelString[30];
+float ugaoRotacije = 0;
 /*funkcija koja proverava da li je popunjen neki red i brise popunjene redove*/
 
 //PROBA
@@ -402,6 +403,12 @@ static void on_display(void)
     glLoadIdentity();
     gluLookAt(0, 0, 1000, 0, 0, 0, 0, 1, 0);
     drawTetrisField(50, fieldMatrix);
+    glPushMatrix();
+    glTranslatef(-450,0,0);
+
+    drawOnePiece(zamena.type, zamena.blockMatrix,50,ugaoRotacije);
+    ugaoRotacije += 0.5;
+    glPopMatrix();
     glColor3f(0.5, 0.5, 0.5);
     sprintf(scoreString, "Score: %d", score);
     sprintf(levelString, "Level: %d", lvl);
@@ -409,7 +416,9 @@ static void on_display(void)
     drawString(350, 0, 0, scoreString); //Koristi sprintf
     drawString(350, -30, 0, levelString);
     drawString(350, -60, 0, linesString);
-
     /* Postavlja se nova slika u prozor. */
     glutSwapBuffers();
 }
+
+
+
