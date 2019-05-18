@@ -4,7 +4,7 @@ Tetriks is a Tetris remake made in C using OpenGL and love for the greatest game
 
 ## Installation
 
-Download files, make files, and just run it, and have fun!
+Download files, make files, run it, and have fun!
 
 ```bash
 make tetriks
