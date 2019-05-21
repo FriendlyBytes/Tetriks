@@ -11,6 +11,57 @@
 #define dark_blue 6
 #define green 7
 #include "constants.h"
+
+void drawString(float x, float y, float z, char *string)
+{
+    
+    glRasterPos3f(x, y, z);
+
+    for (char *c = string; *c != '\0'; c++)
+    {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c); // Updates the position
+    }
+}
+
+
+GLuint glInitTexture(char* filename)
+{
+    GLuint t = 0;
+
+    glGenTextures( 1, &t );
+    glBindTexture(GL_TEXTURE_2D, t);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    unsigned char data[] = { 255, 0, 0, 255 };
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
+    return t;
+}
+void drawImage(GLuint file,
+    float x,
+    float y,
+    float w,
+    float h,
+    float angle)
+{
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+    glPushMatrix();
+    glTranslatef(x, y, 0.0);
+    glRotatef(angle, 0.0, 0.0, 1.0);
+
+    glBindTexture(GL_TEXTURE_2D, file);
+    glEnable(GL_TEXTURE_2D);
+
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0, 0.0); glVertex3f(x, y, 0.0f);
+    glTexCoord2f(0.0, 2.0); glVertex3f(x, y + h, 0.0f);
+    glTexCoord2f(2.0, 2.0); glVertex3f(x + w, y + h, 0.0f);
+    glTexCoord2f(2.0, 0.0); glVertex3f(x + w, y, 0.0f);
+    glEnd();
+
+    glPopMatrix();
+}
+
+
 /*
     Kako funkcionise iscrtavanje tabele tetris:
     1. postoji matrica field matrix cije su dimenzije fieldWidth i fieldHight
@@ -337,8 +388,8 @@ void drawOnePiece(int color,int matrix[4][4],int size, float angle)
     int i,j;
     size *= 0.75;
     glPushMatrix();
-    glRotatef(angle,0,1,0);
     glTranslatef(-2*size,0,0);
+    glRotatef(angle,0,1,0);
     glRotatef(90,0,0,1);
     for(j = 0; j < 4; j++)
         {
@@ -370,4 +421,111 @@ int doesThePieceHitTheWall(tetrisPiece piece, int wall[fieldWidth + 2][fieldHigh
     return 0;
     
 }
+void drawTransparentSqr(float length, float r, float g, float b, float alpha)
+{
+    glColor4f(r, g, b, alpha);
+    glEnable(GL_DEPTH_TEST);
+    glBegin(GL_QUADS);
+        glVertex2f(-length/2.0, length/2.0); // top left
+        glVertex2f(length/2.0, length/2.0); // top right 
+        glVertex2f(length/2.0, -length/2.0); // bottom right
+        glVertex2f(-length/2.0, -length/2.0); // bottom left
+    glEnd();
+    glColor4f(1,1,1,1);
+}
+void drawLotsOfTransparentSqrs(float length, float r, float g, float b, float alpha, int n, float koordinate [10][2])
+{
+    int i;
+    for(i = 0; i < n; i++)
+    {
+        glPushMatrix();
+
+        glTranslatef(koordinate[i][0],koordinate[i][1],0);
+        drawTransparentSqr(length,r,g,b,alpha);
+        glPopMatrix();
+    }
+}
+void drawStars()
+{
+    float koordinate1[10][2] ={{-700,1},{-650,400},{-300,300},{-211,221},{431,150},{510,403},{300,542},{400,200},{36,396},{110,334}}; 
+    float koordinate2[10][2] ={{-700,1},{-593,234},{-314,17},{-292,141},{390,320},{403,302},{531,321},{112,200},{2,432},{704,20}};
+    drawLotsOfTransparentSqrs(3,1,1,1,(1.0/(time(NULL)%3+1)),10,koordinate1);
+    drawLotsOfTransparentSqrs(3,1,1,0,1-(1.0/(time(NULL)%3+1)),10,koordinate2);
+}
+/*oordinate su:
+x: 192 
+y: -230koordinate su:
+x: 221 
+y: -333koordinate su:
+x: 265 
+y: -333*/
+void drawRedLights()
+{
+    float koordinate[10][2] = {{-515,-9},{-263,18},{-263,20},{-528,-79},{-531,-10}};
+    drawLotsOfTransparentSqrs(6,1,0,0,(1.0/((time(NULL)+1)%4+2)),5,koordinate);
+}
+
+void drawWindowLight(float x, float y,float r,float g, float b, float t, float s)
+{
+    glPushMatrix();
+    glDisable(GL_DEPTH_TEST);
+    glTranslatef(x, y, 0);
+    //glColor4f(r,g,b,t);
+    drawTransparentSqr(s,r,g,b,t);
+    glEnable(GL_DEPTH_TEST);
+    glPopMatrix();
+}
+/*void drawWindowLight(float x, float y, float r, float g, float b, float t)
+{
+    glPushMatrix();
+    glDisable(GL_DEPTH_TEST);
+    glTranslatef(x, y, 0);
+    glColor4f(r, g, b, t);
+    glutSolidCube(15); ////10,10);
+    glEnable(GL_DEPTH_TEST);
+    glPopMatrix();
+}*/
+void drawLotsOfWindowLights()
+{
+    int i;
+    int numZute =4;
+    int numBele = 4;
+    int numMaleZute = 6;
+    float koordinateZute[10][2] = {{-412,-238},{192,-240},{221,-345},{265,-345}};
+    float koordinateBele[10][2] = {{-60,-156},{-121, -213},{-630,-130},{-500,-410}};
+    float koordinateMaleZute[10][2] = {{35,-9},{69,-9},{135,-4},{571,-4},{589,-4},{606,-4}};
+    for(i = 0; i < numZute; i++)
+    {
+        drawWindowLight(koordinateZute[i][0],koordinateZute[i][1], 1,0.8,0,1.0/((time(NULL)%2+1)*5),30);
+    }
+    for(i = 0; i < numBele; i++)
+    {
+        drawWindowLight(koordinateBele[i][0],koordinateBele[i][1], 1,1,1,1.0/(((time(NULL)+1)%2+1)*5),20);
+    }
+    for(i = 0; i < numMaleZute; i++)
+    {
+        drawWindowLight(koordinateMaleZute[i][0],koordinateMaleZute[i][1], 1,0.8,0,1.0/(((time(NULL)+1)%5+1)*3),15);
+    }
+}
+void drawKlinickiCentarLight()
+{
+    glPushMatrix();
+    glDisable(GL_DEPTH_TEST);
+    glTranslatef(-380, -74, 0);
+    glScalef(6,1.5,1);
+    //glColor4f(1,1,1,1.0/(time(NULL)%2+1));//RGBA(133,163,255,0.4)
+    drawTransparentSqr(20,1,1,1,1.0/(time(NULL)%7+3));
+    glEnable(GL_DEPTH_TEST);
+    glPopMatrix();
+}
+void drawBackgroundDetails()
+{
+    glPushMatrix();
+    drawStars();
+    drawRedLights();
+    drawLotsOfWindowLights();
+    drawKlinickiCentarLight();
+    glPopMatrix();
+}
+
 #endif
