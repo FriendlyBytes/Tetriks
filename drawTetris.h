@@ -14,11 +14,11 @@
 enum typeOfPiece{ none, O, L, Z, T, I, J, S}; //Oblik bloka koji pada, imenovani su po nazivima parcica koji opisuju njihov oblik
 
 typedef struct tetrispiece{
-    enum typeOfPiece type; //what piece
-    int rotation; //the way it's rotated
-    int xPosition; //its location on the x axis
-    int yPosition;//its location on the y axis
-    int blockMatrix[4][4];
+    enum typeOfPiece type; //tip tetromina
+    int rotation; //kako je rotiran
+    int xPosition; //x koordinata
+    int yPosition;//y koordinata
+    int blockMatrix[4][4];//tetromino iscrtan na matrici 4x4 
 } tetrisPiece;
 void rotateMatrix(int matrixToRotate[4][4], int whichWayToRotate, int result[4][4])
 {
@@ -48,11 +48,11 @@ void rotateMatrix(int matrixToRotate[4][4], int whichWayToRotate, int result[4][
     }
 }
 
-int desetinke()
+int desetinke()//vracs vreme u desetinkama
 {
     return(clock()/(CLOCKS_PER_SEC/10.0));
 }
-void drawString(float x, float y, float z, char *string)
+void drawString(float x, float y, float z, char *string)//iscrtava string
 {
     glDisable(GL_DEPTH_TEST);
     glRasterPos3f(x, y, z);
@@ -65,7 +65,7 @@ void drawString(float x, float y, float z, char *string)
 }
 
 
-GLuint glInitTexture(char* filename)
+GLuint glInitTexture(char* filename) //kopirano sa vezbi, postavlja teksturu
 {
     GLuint t = 0;
 
@@ -195,7 +195,7 @@ static void drawTetrisField(int size, int matrix[fieldWidth][fieldHight])
     for (i = 0; i < fieldWidth; i++)
     {
         glPushMatrix();
-        for (j = 0; j < fieldHight-4; j++)//for (j = 0; j < fieldHight; j++)
+        for (j = 0; j < fieldHight-4; j++)
         {
             drawTetrisWireBlock(size, 0.3, 0.3, 0.3, 1);
             glTranslatef(0, size, 0);
@@ -301,13 +301,13 @@ static void drawTetrisField(int size, int matrix[fieldWidth][fieldHight])
     glPopMatrix();
     glPopMatrix();
 }
-tetrisPiece rotatePiece(tetrisPiece toBeRotated) //TODO napravi rotaciju u kontra smeru
+tetrisPiece rotatePiece(tetrisPiece toBeRotated) 
 {
     tetrisPiece returnMe = toBeRotated;
     rotateMatrix(toBeRotated.blockMatrix, 1, returnMe.blockMatrix);
     return returnMe;
 }
-tetrisPiece newTetrisPiece()
+tetrisPiece newTetrisPiece() //pravi random tetromino
 {
     tetrisPiece toBeReturned = {(int)rand() % 7 + 1, 0, fieldWidth / 2 - 1, fieldHight};
     int i, j;
@@ -423,7 +423,7 @@ void takeOutTetrisPiece(tetrisPiece piece, int matrix[fieldWidth][fieldHight])
                 if(piece.xPosition+i-1<fieldWidth && piece.yPosition-j-1<fieldHight)
                 matrix[piece.xPosition + i - 1][piece.yPosition - j - 1] = 0;
 }
-void drawOnePiece(int color,int matrix[4][4],int size, float angle)
+void drawOnePiece(int color,int matrix[4][4],int size, float angle)//sluzi za iscrtavanje tetromina koji je sa leve strane
 {
     glPushMatrix();
     int i,j;
@@ -486,6 +486,8 @@ void drawLotsOfTransparentSqrs(float length, float r, float g, float b, float al
         glPopMatrix();
     }
 }
+
+//Ovde ima dosta formula i brojeva koji su hardcode-ovani da bi se lepo uklopili u pozadinu
 void drawStars()
 {
     float koordinate1[10][2] ={{-700,1},{-650,400},{-300,300},{-211,221},{431,150},{510,403},{300,542},{400,200},{36,396},{110,334}}; 
@@ -498,7 +500,9 @@ void drawRedLights()
 {
     glDisable(GL_DEPTH_TEST);
     float koordinate[10][2] = {{-515,-9},{-263,18},{-263,20},{-528,-79},{-531,-10}};
-    drawLotsOfTransparentSqrs(6,1,0,0,(1.0/((time(NULL)+1)%4+2)),5,koordinate);
+    drawLotsOfTransparentSqrs(6,1,0,0,(1.0/((time(NULL)+1)%4+2)),5,koordinate); //koristim ostatke koji se dobijaju pri deljenju vremena sa nekim brojem
+                                                                                    //za koeficijent transparentnosti da bi se dobio efekat postepenog 
+                                                                                    //povecavanja inteziteta svetlosti i naglo gasenje
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -507,7 +511,6 @@ void drawWindowLight(float x, float y,float r,float g, float b, float t, float s
     glPushMatrix();
     glDisable(GL_DEPTH_TEST);
     glTranslatef(x, y, 0);
-    //glColor4f(r,g,b,t);
     drawTransparentSqr(s,r,g,b,t);
     glEnable(GL_DEPTH_TEST);
     glPopMatrix();
@@ -541,7 +544,6 @@ void drawKlinickiCentarLight()
     glDisable(GL_DEPTH_TEST);
     glTranslatef(-380, -74, 0);
     glScalef(6,1.5,1);
-    //glColor4f(1,1,1,1.0/(time(NULL)%2+1));//RGBA(133,163,255,0.4)
     drawTransparentSqr(20,1,1,1,1.0/(time(NULL)%7+3));
     glEnable(GL_DEPTH_TEST);
     glPopMatrix();

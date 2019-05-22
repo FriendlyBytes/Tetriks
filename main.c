@@ -357,7 +357,6 @@ void SpecialInput(int key, int x, int y) // funkcija za specijalne dugmice, popu
         if (!downKeyIsPressed && timer_active)
         {
             downKeyIsPressed = 1;
-            score += 20;
             currentlyFallingTetromino
         .yPosition = currentlyFallingTetromino
         .yPosition - 1;//tetromino se pomera dole
@@ -400,6 +399,7 @@ void SpecialInput(int key, int x, int y) // funkcija za specijalne dugmice, popu
             .yPosition - 1;
                 insertPieceIntoField(currentlyFallingTetromino
             , fieldMatrix);
+            score += 20;
             }
             glutPostRedisplay();
             downKeyIsPressed = 0;
