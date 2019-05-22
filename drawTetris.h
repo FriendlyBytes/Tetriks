@@ -12,6 +12,10 @@
 #define green 7
 #include "constants.h"
 
+int desetinke()
+{
+    return(clock()/(CLOCKS_PER_SEC/10.0));
+}
 void drawString(float x, float y, float z, char *string)
 {
     glDisable(GL_DEPTH_TEST);
@@ -450,8 +454,8 @@ void drawStars()
 {
     float koordinate1[10][2] ={{-700,1},{-650,400},{-300,300},{-211,221},{431,150},{510,403},{300,542},{400,200},{36,396},{110,334}}; 
     float koordinate2[10][2] ={{-700,1},{-593,234},{-314,17},{-292,141},{390,320},{403,302},{531,321},{112,200},{2,432},{704,20}};
-    drawLotsOfTransparentSqrs(3,1,1,1,(1.0/(time(NULL)%3+1)),10,koordinate1);
-    drawLotsOfTransparentSqrs(3,1,1,0,1-(1.0/(time(NULL)%3+1)),10,koordinate2);
+    drawLotsOfTransparentSqrs(3,1,1,1,fabs(0.5 - 16.0/((desetinke()+8)%16+1))/3,10,koordinate1);
+    drawLotsOfTransparentSqrs(3,1,1,0,fabs(0.5 - 16.0/(desetinke()%16+1))/3,10,koordinate2);
 }
 
 void drawRedLights()
@@ -472,16 +476,7 @@ void drawWindowLight(float x, float y,float r,float g, float b, float t, float s
     glEnable(GL_DEPTH_TEST);
     glPopMatrix();
 }
-/*void drawWindowLight(float x, float y, float r, float g, float b, float t)
-{
-    glPushMatrix();
-    glDisable(GL_DEPTH_TEST);
-    glTranslatef(x, y, 0);
-    glColor4f(r, g, b, t);
-    glutSolidCube(15); ////10,10);
-    glEnable(GL_DEPTH_TEST);
-    glPopMatrix();
-}*/
+
 void drawLotsOfWindowLights()
 {
     int i;
@@ -517,24 +512,23 @@ void drawKlinickiCentarLight()
 }
 void drawSmoke()
 {
-    float koordinateOdzaci[2][2] = {{-502,59},{-516,64}};//dodaje se -14 i 6
     glDisable(GL_DEPTH_TEST);
     glPushMatrix();
-    glTranslatef(-516,65 + (time(NULL)%15)*10,0);
-    glColor4f(0.7,0.6,1,(1-time(NULL)%15/15.0)/2);
-    glutSolidSphere((time(NULL)%15+1)*1.5,10,10);
+    glTranslatef(-516,65 + (desetinke()%15)*10,0);
+    glColor4f(0.7,0.6,1,(1-desetinke()%15/15.0)/2);
+    glutSolidSphere((desetinke()%15+1)*1.5,10,10);
     glPopMatrix();
 
     glPushMatrix();
-    glTranslatef(-530,70 + (time(NULL)+3)%11*10,0);
-    glColor4f(0.75,0.6,1,(1-(time(NULL)+3)%11/11.0)/2);
-    glutSolidSphere((((time(NULL)+3)%11)+1)*1.5,10,10);
+    glTranslatef(-530,70 + (desetinke()+3)%11*10,0);
+    glColor4f(0.75,0.6,1,(1-(desetinke()+3)%11/11.0)/2);
+    glutSolidSphere((((desetinke()+3)%11)+1)*1.5,10,10);
     glPopMatrix();
 
     glPushMatrix();
-    glTranslatef(-530,70 + (time(NULL)+8)%11*10,0);
-    glColor4f(0.65,0.65,1,(1-(time(NULL)+8)%11/11.0)/2);
-    glutSolidSphere((((time(NULL)+8)%11)+1)*1.5,10,10);
+    glTranslatef(-530,70 + (desetinke()+8)%11*10,0);
+    glColor4f(0.65,0.65,1,(1-(desetinke()+8)%11/11.0)/2);
+    glutSolidSphere((((desetinke()+8)%11)+1)*1.5,10,10);
     glPopMatrix();
 
     glEnable(GL_DEPTH_TEST);

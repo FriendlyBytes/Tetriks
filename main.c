@@ -14,12 +14,10 @@
 
 #define FILENAME0 "slika32.bmp"
 static GLuint names[1];
-Image * image;
-int obrisiMeX = 0;
-int obrisiMey = 0;
+Image *image;
+
 /* Fleg koji odredjuje stanje tajmera. */
 static int timer_active;
-
 
 int delay = 150000; //vremenski interval na koji se vrsi pomeranje tetromina nanize
 tetrisPiece trenutnoPadajuci;
@@ -91,7 +89,7 @@ int checkIfFiled(int matrix[fieldWidth][fieldHight], int matrixWall[fieldWidth +
         glutPostRedisplay();
     }
     numberOfClearedLines += numOfFiledRows;
-    lvl = numberOfClearedLines/5;
+    lvl = numberOfClearedLines / 5;
     return 0;
 }
 
@@ -110,7 +108,7 @@ int main(int argc, char **argv)
     timeOfFalling = clock();
     trenutnoPadajuci = newTetrisPiece();
     zamena = newTetrisPiece();
-    
+
     //inicijalizacija matrice zida, TODO odvojiti u posebnu funkciju
     int i;
     for (i = 0; i < fieldWidth + 2; i++)
@@ -128,20 +126,19 @@ int main(int argc, char **argv)
     glutInitWindowPosition(100, 100);
     glutCreateWindow(argv[0]);
 
-
     glutKeyboardFunc(on_keyboard);
     glutSpecialFunc(SpecialInput);
     glutReshapeFunc(on_reshape);
     glutDisplayFunc(on_display);
     //timer_active = 0; TODO vrati kad budes radila animaciju
 
-    glClearColor(92/255.0,117/255.0,255/255.0,1);
+    glClearColor(92 / 255.0, 117 / 255.0, 255 / 255.0, 1);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     //PROBA TEKSTURE
-     /* Ukljucuju se teksture. */
+    /* Ukljucuju se teksture. */
     glEnable(GL_TEXTURE_2D);
 
     glTexEnvf(GL_TEXTURE_ENV,
@@ -177,7 +174,6 @@ int main(int argc, char **argv)
     /* Unistava se objekat za citanje tekstura iz fajla. */
     image_done(image);
 
-    
     glutMainLoop();
 
     return 0;
@@ -192,7 +188,6 @@ static void on_keyboard(unsigned char key, int x, int y)
         /* Zavrsava se program. */
         exit(0);
         break;
-    //TODO obrisi ovaj red kad budes animirala
     case 's':
     case 'S':
         /* Pokrece se simulacija. */
@@ -206,7 +201,7 @@ static void on_keyboard(unsigned char key, int x, int y)
     case 'p':
     case 'P':
     {
-        /* Zaustavlja se simulacija. */
+        /* Zaustavlja se. */
         if (timer_active && !indHelpActivated)
             timer_active = 0;
         break;
@@ -214,27 +209,27 @@ static void on_keyboard(unsigned char key, int x, int y)
     case 'c':
     case 'C':
     {
-        if(timer_active)
+        if (timer_active)
         {
-        indSwitched = 1;
-        
-        if(indFellAfterSwitch)
-        {
-            t = trenutnoPadajuci;
-            takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
-            trenutnoPadajuci = zamena;
-            insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
-            zamena = t;
-            zamena.xPosition = fieldWidth / 2 - 1;
-            zamena.yPosition = fieldHight;
-            indFellAfterSwitch = 0;
-        }
+            indSwitched = 1;
+
+            if (indFellAfterSwitch)
+            {
+                t = trenutnoPadajuci;
+                takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
+                trenutnoPadajuci = zamena;
+                insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
+                zamena = t;
+                zamena.xPosition = fieldWidth / 2 - 1;
+                zamena.yPosition = fieldHight;
+                indFellAfterSwitch = 0;
+            }
         }
         break;
     case 'h':
     case 'H':
     {
-        if(indHelpActivated)
+        if (indHelpActivated)
         {
             indHelpActivated = 0;
             glutTimerFunc(0, on_timer, 0);
@@ -249,34 +244,6 @@ static void on_keyboard(unsigned char key, int x, int y)
         break;
     }
     }
-
-    // case 'p':
-    // {
-    //     printf("{%d, %d}", obrisiMeX, obrisiMey);
-    //     break;
-    // }
-    // case 'k':
-    // {
-    //     obrisiMey -=1;
-    //     break;
-    // }
-    // case 'i':
-    // {
-    //     obrisiMey +=1;
-    //     break;
-    // }
-    // case 'j':
-    // {
-    //     obrisiMeX -=1;
-    //     break;
-    // }
-    // case 'l':
-    // {
-    //     obrisiMeX +=1;
-    //     break;
-    // }
-    
-    
     }
 }
 void SpecialInput(int key, int x, int y)
@@ -286,7 +253,7 @@ void SpecialInput(int key, int x, int y)
     {
     case GLUT_KEY_UP:
     {
-        if (!upKeyIsPressed)
+        if (!upKeyIsPressed && timer_active)
         {
             upKeyIsPressed = 1;
             tetrisPiece checker1 = rotatePiece(trenutnoPadajuci);
@@ -348,9 +315,10 @@ void SpecialInput(int key, int x, int y)
     }
     case GLUT_KEY_DOWN:
     {
-        if (!downKeyIsPressed)
+        if (!downKeyIsPressed && timer_active)
         {
             downKeyIsPressed = 1;
+            score += 20;
             trenutnoPadajuci.yPosition = trenutnoPadajuci.yPosition - 1;
             if (doesThePieceHitTheWall(trenutnoPadajuci, fieldMatrixWall))
             {
@@ -386,7 +354,7 @@ void SpecialInput(int key, int x, int y)
     break;
     case GLUT_KEY_LEFT:
     {
-        if (!upKeyIsPressed)
+        if (!upKeyIsPressed && timer_active)
         {
             upKeyIsPressed = 1;
             checker = trenutnoPadajuci;
@@ -404,7 +372,7 @@ void SpecialInput(int key, int x, int y)
 
     case GLUT_KEY_RIGHT:
     {
-        if (!upKeyIsPressed)
+        if (!upKeyIsPressed && timer_active)
         {
             upKeyIsPressed = 1;
             checker = trenutnoPadajuci;
@@ -416,11 +384,9 @@ void SpecialInput(int key, int x, int y)
                 insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
             }
             upKeyIsPressed = 0;
-        }     
+        }
         break;
     }
-
-
     }
 
     glutPostRedisplay();
@@ -432,7 +398,7 @@ static void on_timer(int value)
         return;
     if (checkIfEndOfGame(fieldMatrixWall))
         timer_active = 0;
-    if (((clock() - timeOfFalling) * 1.0) / CLOCKS_PER_SEC > 0.2 - lvl*0.05)
+    if (((clock() - timeOfFalling) * 1.0) / CLOCKS_PER_SEC > 0.2 - log(lvl + 1) / 10.0)
     {
 
         trenutnoPadajuci.yPosition = trenutnoPadajuci.yPosition - 1;
@@ -492,26 +458,26 @@ static void on_display(void)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     gluLookAt(0, 0, 780, 0, 0, 0, 0, 1, 0);
-    
+
     glBindTexture(GL_TEXTURE_2D, names[0]); //postavljanje izabrane pozadine za teksturu
     //iscrtavanje pozadinske teksture u formi quad-a
     glPushMatrix();
-    glTranslatef(-720,-480,0);
+    glTranslatef(-720, -480, 0);
     glDisable(GL_DEPTH_TEST);
     glBegin(GL_QUADS);
-        glNormal3f(0, 0, 1);
+    glNormal3f(0, 0, 1);
 
-        glTexCoord2f(0, 0);
-        glVertex2f(0, 0);
+    glTexCoord2f(0, 0);
+    glVertex2f(0, 0);
 
-        glTexCoord2f(1, 0);
-        glVertex2f(1439,0);
+    glTexCoord2f(1, 0);
+    glVertex2f(1439, 0);
 
-        glTexCoord2f(1, 1);
-        glVertex2f(1439, 960);
+    glTexCoord2f(1, 1);
+    glVertex2f(1439, 960);
 
-        glTexCoord2f(0, 1);
-        glVertex2f(0, 960);
+    glTexCoord2f(0, 1);
+    glVertex2f(0, 960);
     glEnd();
 
     glPopMatrix();
@@ -521,25 +487,20 @@ static void on_display(void)
 
     //beli kvadrat koji sadrzi podateke o poenima
     glPushMatrix();
-    glTranslatef(-400, 200,-50);
-    drawTransparentSqr(150,1,1,1,0.2);
+    glTranslatef(-390, 180, -50);
+    drawTransparentSqr(150, 1, 1, 1, 0.2);
     glPopMatrix();
-    //OBRISI ME
-    glPushMatrix();
-    glTranslatef(obrisiMeX,obrisiMey,20);
-    drawTransparentSqr(6,1,0,0,1);
-    glPopMatrix();
-    //-OBRISI ME
+
     drawBackgroundDetails();
     //iscrtava se matrica sa tetriminima
     drawTetrisField(40, fieldMatrix);
-    
+
     //provera da li treba da se prikaze sacuvani tetromino i njegov prikaz
-    if(indSwitched)
+    if (indSwitched)
     {
         glPushMatrix();
-        glTranslatef(-400,0,0);
-        drawOnePiece(zamena.type, zamena.blockMatrix,50,ugaoRotacije);
+        glTranslatef(-400, 0, 0);
+        drawOnePiece(zamena.type, zamena.blockMatrix, 50, ugaoRotacije);
         ugaoRotacije += 0.5;
         glPopMatrix();
     }
@@ -555,22 +516,22 @@ static void on_display(void)
     sprintf(scoreString, "Score: %d", score);
     sprintf(levelString, "Level: %d", lvl);
     sprintf(linesString, "Lines cleared: %d", numberOfClearedLines);
-    drawString(-430, 150, 0, scoreString); 
+    drawString(-430, 150, 0, scoreString);
     drawString(-430, 180, 0, levelString);
     drawString(-430, 210, 0, linesString);
     glColor3f(1, 1, 1);
     drawString(250, -390, 0, helpString);
     drawString(250, -420, 0, byString);
-    if(indHelpActivated)
+    if (indHelpActivated)
     {
         glPushMatrix();
         glDisable(GL_DEPTH_TEST);
-        glScalef(1,0.8,1);
-        drawTransparentSqr(400,1,1,1,0.3);
+        glScalef(1, 0.8, 1);
+        drawTransparentSqr(400, 1, 1, 1, 0.3);
         glEnable(GL_DEPTH_TEST);
         glPopMatrix();
         glColor3f(0, 0, 0);
-        
+
         char red1[30] = "HELP";
         char red2[30] = "S - start game";
         char red3[30] = "P - pause game";
@@ -580,15 +541,15 @@ static void on_display(void)
         char red7[30] = "Down key - go down faster";
         char red8[30] = "H - enough help";
         char red9[30] = "Esc - exit";
-        drawString(-20,130,0,red1);
-        drawString(-180,70,0,red2);
-        drawString(-180,40,0,red3);
-        drawString(-180,10,0,red4);
-        drawString(-180,-20,0,red5);
-        drawString(-180,-50,0,red6);
-        drawString(-180,-80,0,red7);
-        drawString(-180,-110,0,red8);
-        drawString(-180,-140,0,red9);
+        drawString(-20, 130, 0, red1);
+        drawString(-180, 70, 0, red2);
+        drawString(-180, 40, 0, red3);
+        drawString(-180, 10, 0, red4);
+        drawString(-180, -20, 0, red5);
+        drawString(-180, -50, 0, red6);
+        drawString(-180, -80, 0, red7);
+        drawString(-180, -110, 0, red8);
+        drawString(-180, -140, 0, red9);
     }
     /* Postavlja se nova slika u prozor. */
     glutSwapBuffers();
