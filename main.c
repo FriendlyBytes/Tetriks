@@ -5,48 +5,57 @@
 #include <GL/glut.h>
 #include <stdio.h>
 #include <time.h>
-#include "constants.h"
+
 #include <unistd.h>
-//TODO odvoj u constants.h
-#include "drawTetris.h"
-#include "simpleToolFunctions.h"
-#include "image.h"
+//nije ceo program u sastav komentarima, samo ove globalne promenljive
+#include "drawTetris.h" //BUG imam bag (prenos parametara, negde koristim globalne promenljive 
+                        // i treba da regulisem one define-ove na pocetku programa, ali rok je za dva sata :(
+                        // mislila sam da je lako izdvojiti .c fajl iz .h sa funkcijama
+
+#include "image.h" // preuzeto sa casova vezbi
 
 #define FILENAME0 "slika32.bmp"
-static GLuint names[1];
-Image *image;
+static GLuint names[1];// sadrzi teksture
+Image *image;// slika koju koristimo kao teksturu
 
 /* Fleg koji odredjuje stanje tajmera. */
 static int timer_active;
 
-int delay = 150000; //vremenski interval na koji se vrsi pomeranje tetromina nanize
-tetrisPiece trenutnoPadajuci;
-tetrisPiece zamena;
+tetrisPiece currentlyFallingTetromino;// tetromino koji trenutno pada
+tetrisPiece switchTetromino; // tetromino koji cuvamo sa strane
 tetrisPiece t;
+// definicije callback funkcija
 static void on_keyboard(unsigned char key, int x, int y);
 static void on_reshape(int width, int height);
 static void on_timer(int value);
 static void on_display(void);
 static void SpecialInput(int key, int x, int y);
-int fieldMatrix[fieldWidth][fieldHight] = {};              //matrix which will hold colors of the tetris fields
-int fieldMatrixWall[fieldWidth + 2][fieldHight + 1] = {0}; //matrix of 1s and 0s which keeps track of where new pieces can't fall
+int fieldMatrix[fieldWidth][fieldHight] = {};             // matrica koja predstavlja stanje trenutne partije tetrisa (sadrzi boje polja)
+int fieldMatrixWall[fieldWidth + 2][fieldHight + 1] = {0}; // matrica koja sluzi kao omotac prethodne matrice
+                                                           // i koja oznacava gde su granice gde tetromino moze da se pomera
+                                                           // tj zid koji tetromino ne moze da prodje
+// indikatori za pritisnute dugmice
 int upKeyIsPressed = 0;
 int downKeyIsPressed = 0;
-int moveDown = 0;
-int lvl = 0;
-int numberOfClearedLines = 0;
-int wallHit = 0;
-time_t wallHitTime;
-int score = 0;
-clock_t timeOfFalling;
 
-float ugaoRotacije = 0;
-int indSwitched = 0;
-int indFellAfterSwitch = 1;
-int indHelpActivated = 0;
-tetrisPiece t;
+int score = 0;// rezultat
+int lvl = 0;// nivo
+int numberOfClearedLines = 0;//  broj popunjenih linija koje su obrisane
 
-int checkIfFiled(int matrix[fieldWidth][fieldHight], int matrixWall[fieldWidth + 2][fieldHight + 1])
+int wallHit = 0; // indikator da li trenutno tetromino udara u
+time_t wallHitTime;// vreme kada je tetromino udario u zid
+
+clock_t timeOfFalling;//vreme kada se tetromino pomerio za jednu poziciju dole poslednji put
+
+
+float angleOfRotation = 0;//ugao rotacije tetromina sa leve strane
+
+int indSwitched = 0;// da li je zamenjen tetromino sa tetrominom koji stoji sa leve strane na pocetku igre
+int indFellAfterSwitch = 1;// da li je tetromino za pao posle zamene (ako nije, ne moze ponovo da se menja)
+int indHelpActivated = 0;//da li je korisnik aktivirao pomocni meni
+
+
+int checkIfFiled(int matrix[fieldWidth][fieldHight], int matrixWall[fieldWidth + 2][fieldHight + 1])//provera da li je red popunjen
 {
     int i, j, k, ind;
     int numOfFiledRows = 0;
@@ -69,7 +78,7 @@ int checkIfFiled(int matrix[fieldWidth][fieldHight], int matrixWall[fieldWidth +
                 matrix[j][fieldHight - 1] = 0;
             i--;
         }
-        switch (numOfFiledRows)
+        switch (numOfFiledRows)//formula za bodovanje sa tetrisa sa nintendo entertainment system-a
         {
         case 1:
             score += 40 * (lvl + 1);
@@ -106,8 +115,9 @@ int main(int argc, char **argv)
 {
     srand(time(NULL));
     timeOfFalling = clock();
-    trenutnoPadajuci = newTetrisPiece();
-    zamena = newTetrisPiece();
+    currentlyFallingTetromino
+ = newTetrisPiece();
+    switchTetromino = newTetrisPiece();
 
     //inicijalizacija matrice zida, TODO odvojiti u posebnu funkciju
     int i;
@@ -130,14 +140,13 @@ int main(int argc, char **argv)
     glutSpecialFunc(SpecialInput);
     glutReshapeFunc(on_reshape);
     glutDisplayFunc(on_display);
-    //timer_active = 0; TODO vrati kad budes radila animaciju
-
+    
     glClearColor(92 / 255.0, 117 / 255.0, 255 / 255.0, 1);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    //PROBA TEKSTURE
+     //teksture, preuzeto sa vezbi
     /* Ukljucuju se teksture. */
     glEnable(GL_TEXTURE_2D);
 
@@ -190,7 +199,7 @@ static void on_keyboard(unsigned char key, int x, int y)
         break;
     case 's':
     case 'S':
-        /* Pokrece se simulacija. */
+        // zapocinje/nastavlja se igra
         if (!timer_active && !indHelpActivated)
         {
             glutTimerFunc(0, on_timer, 0);
@@ -209,19 +218,23 @@ static void on_keyboard(unsigned char key, int x, int y)
     case 'c':
     case 'C':
     {
+        //menja se tetromino koji pada sa onim sa strana ako je to moguce
         if (timer_active)
         {
             indSwitched = 1;
 
-            if (indFellAfterSwitch)
+            if (indFellAfterSwitch)// moguce je zameniti tetromino
             {
-                t = trenutnoPadajuci;
-                takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
-                trenutnoPadajuci = zamena;
-                insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
-                zamena = t;
-                zamena.xPosition = fieldWidth / 2 - 1;
-                zamena.yPosition = fieldHight;
+                t = currentlyFallingTetromino;
+                takeOutTetrisPiece(currentlyFallingTetromino
+            , fieldMatrix);//vadi se tetromino koji pada iz matrice
+                currentlyFallingTetromino
+             = switchTetromino;
+                insertPieceIntoField(currentlyFallingTetromino
+            , fieldMatrix);
+                switchTetromino = t;
+                switchTetromino.xPosition = fieldWidth / 2 - 1;//postavljaju se koordinate switcha na vrh table
+                switchTetromino.yPosition = fieldHight;
                 indFellAfterSwitch = 0;
             }
         }
@@ -229,6 +242,7 @@ static void on_keyboard(unsigned char key, int x, int y)
     case 'h':
     case 'H':
     {
+        // ukljucuje se help, zaustavlja se igra
         if (indHelpActivated)
         {
             indHelpActivated = 0;
@@ -246,63 +260,87 @@ static void on_keyboard(unsigned char key, int x, int y)
     }
     }
 }
-void SpecialInput(int key, int x, int y)
+void SpecialInput(int key, int x, int y) // funkcija za specijalne dugmice, poput strelica
 {
     tetrisPiece checker;
     switch (key)
     {
-    case GLUT_KEY_UP:
+    case GLUT_KEY_UP: // kada se pritisne dugme na gore, treba da se izvrsi rotacija tetromina
+                        //nije moguce, treba da se proveri da li je moguce izvrsiti rotaciju
+                        // ako se tetromino pomeri za mesto levo, desno, gore ili za dva mesta gore
+                        // pa zato sluzi ovaj malo veci if-else
     {
-        if (!upKeyIsPressed && timer_active)
+        if (!upKeyIsPressed && timer_active)// upKeyIsPressed i drugi indikatori
+                                            // za dugmice sluze samo da se cela funkcija izvrsi pre nego sto se ponovo pozove
         {
             upKeyIsPressed = 1;
-            tetrisPiece checker1 = rotatePiece(trenutnoPadajuci);
+            tetrisPiece checker1 = rotatePiece(currentlyFallingTetromino
+        );
             if (!doesThePieceHitTheWall(checker1, fieldMatrixWall))
             {
-                takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
-                trenutnoPadajuci = checker1;
-                insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
+                takeOutTetrisPiece(currentlyFallingTetromino
+            , fieldMatrix);
+                currentlyFallingTetromino
+             = checker1;
+                insertPieceIntoField(currentlyFallingTetromino
+            , fieldMatrix);
             }
             else
             {
-                tetrisPiece checker2 = rotatePiece(trenutnoPadajuci);
+                tetrisPiece checker2 = rotatePiece(currentlyFallingTetromino
+            );
                 checker2.yPosition = checker2.yPosition + 1;
                 if (!doesThePieceHitTheWall(checker2, fieldMatrixWall))
                 {
-                    takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
-                    trenutnoPadajuci = checker2;
-                    insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
+                    takeOutTetrisPiece(currentlyFallingTetromino
+                , fieldMatrix);
+                    currentlyFallingTetromino
+                 = checker2;
+                    insertPieceIntoField(currentlyFallingTetromino
+                , fieldMatrix);
                 }
                 else
                 {
-                    tetrisPiece checker3 = rotatePiece(trenutnoPadajuci);
+                    tetrisPiece checker3 = rotatePiece(currentlyFallingTetromino
+                );
                     checker3.yPosition = checker3.yPosition + 2;
                     if (!doesThePieceHitTheWall(checker3, fieldMatrixWall))
                     {
-                        takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
-                        trenutnoPadajuci = checker3;
-                        insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
+                        takeOutTetrisPiece(currentlyFallingTetromino
+                    , fieldMatrix);
+                        currentlyFallingTetromino
+                     = checker3;
+                        insertPieceIntoField(currentlyFallingTetromino
+                    , fieldMatrix);
                     }
                     else
                     {
-                        tetrisPiece checker4 = rotatePiece(trenutnoPadajuci);
+                        tetrisPiece checker4 = rotatePiece(currentlyFallingTetromino
+                    );
 
                         checker4.xPosition = checker4.xPosition - 1;
                         if (!doesThePieceHitTheWall(checker4, fieldMatrixWall))
                         {
-                            takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
-                            trenutnoPadajuci = checker4;
-                            insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
+                            takeOutTetrisPiece(currentlyFallingTetromino
+                        , fieldMatrix);
+                            currentlyFallingTetromino
+                         = checker4;
+                            insertPieceIntoField(currentlyFallingTetromino
+                        , fieldMatrix);
                         }
                         else
                         {
-                            tetrisPiece checker5 = rotatePiece(trenutnoPadajuci);
+                            tetrisPiece checker5 = rotatePiece(currentlyFallingTetromino
+                        );
                             checker4.xPosition = checker5.xPosition + 1;
                             if (!doesThePieceHitTheWall(checker5, fieldMatrixWall))
                             {
-                                takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
-                                trenutnoPadajuci = checker5;
-                                insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
+                                takeOutTetrisPiece(currentlyFallingTetromino
+                            , fieldMatrix);
+                                currentlyFallingTetromino
+                             = checker5;
+                                insertPieceIntoField(currentlyFallingTetromino
+                            , fieldMatrix);
                             }
                         }
                     }
@@ -313,75 +351,99 @@ void SpecialInput(int key, int x, int y)
 
         break;
     }
-    case GLUT_KEY_DOWN:
+    case GLUT_KEY_DOWN: // treba da se proveri da li je moguce da se tetromino pomeri brze dole
+                      // i da se inkrementira broj poena kad se to desi
     {
         if (!downKeyIsPressed && timer_active)
         {
             downKeyIsPressed = 1;
             score += 20;
-            trenutnoPadajuci.yPosition = trenutnoPadajuci.yPosition - 1;
-            if (doesThePieceHitTheWall(trenutnoPadajuci, fieldMatrixWall))
+            currentlyFallingTetromino
+        .yPosition = currentlyFallingTetromino
+        .yPosition - 1;//tetromino se pomera dole
+            if (doesThePieceHitTheWall(currentlyFallingTetromino
+        , fieldMatrixWall))
             {
                 if (!wallHit)
                 {
                     wallHit = 1;
                     wallHitTime = time(NULL);
                 }
-                trenutnoPadajuci.yPosition = trenutnoPadajuci.yPosition + 1;
+                currentlyFallingTetromino
+            .yPosition = currentlyFallingTetromino
+            .yPosition + 1;//vracamo ga za korak gore
                 if (difftime(time(NULL), wallHitTime) > 1)
                 {
                     indFellAfterSwitch = 1;
-                    takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
-                    insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
-                    insertPieceIntoWall(trenutnoPadajuci, fieldMatrixWall);
+                    takeOutTetrisPiece(currentlyFallingTetromino
+                , fieldMatrix);
+                    insertPieceIntoField(currentlyFallingTetromino
+                , fieldMatrix);
+                    insertPieceIntoWall(currentlyFallingTetromino
+                , fieldMatrixWall);
                     checkIfFiled(fieldMatrix, fieldMatrixWall);
-                    trenutnoPadajuci = newTetrisPiece();
+                    currentlyFallingTetromino
+                 = newTetrisPiece();
                     wallHit = 0;
                 }
             }
             else
             {
-                trenutnoPadajuci.yPosition = trenutnoPadajuci.yPosition + 1;
-                takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
+                currentlyFallingTetromino
+            .yPosition = currentlyFallingTetromino
+            .yPosition + 1;
+                takeOutTetrisPiece(currentlyFallingTetromino
+            , fieldMatrix);
                 wallHit = 0;
-                trenutnoPadajuci.yPosition = trenutnoPadajuci.yPosition - 1;
-                insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
+                currentlyFallingTetromino
+            .yPosition = currentlyFallingTetromino
+            .yPosition - 1;
+                insertPieceIntoField(currentlyFallingTetromino
+            , fieldMatrix);
             }
             glutPostRedisplay();
             downKeyIsPressed = 0;
         }
     }
     break;
-    case GLUT_KEY_LEFT:
+    case GLUT_KEY_LEFT:// pomeranje tetromina levo, slicno glut key down spustanju, samo nema onih provera
     {
         if (!upKeyIsPressed && timer_active)
         {
             upKeyIsPressed = 1;
-            checker = trenutnoPadajuci;
+            checker = currentlyFallingTetromino
+        ;
             checker.xPosition = checker.xPosition - 1;
             if (!doesThePieceHitTheWall(checker, fieldMatrixWall))
             {
-                takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
-                trenutnoPadajuci = checker;
-                insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
+                takeOutTetrisPiece(currentlyFallingTetromino
+            , fieldMatrix);
+                currentlyFallingTetromino
+             = checker;
+                insertPieceIntoField(currentlyFallingTetromino
+            , fieldMatrix);
             }
             upKeyIsPressed = 0;
         }
         break;
     }
 
-    case GLUT_KEY_RIGHT:
+    case GLUT_KEY_RIGHT:// analogno levom
     {
         if (!upKeyIsPressed && timer_active)
         {
             upKeyIsPressed = 1;
-            checker = trenutnoPadajuci;
+            checker = currentlyFallingTetromino
+        ;
             checker.xPosition = checker.xPosition + 1;
             if (!doesThePieceHitTheWall(checker, fieldMatrixWall))
             {
-                takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
-                trenutnoPadajuci = checker;
-                insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
+                takeOutTetrisPiece(currentlyFallingTetromino
+            , fieldMatrix);
+                currentlyFallingTetromino
+             = checker;
+                insertPieceIntoField(currentlyFallingTetromino
+            , fieldMatrix);
             }
             upKeyIsPressed = 0;
         }
@@ -398,36 +460,52 @@ static void on_timer(int value)
         return;
     if (checkIfEndOfGame(fieldMatrixWall))
         timer_active = 0;
-    if (((clock() - timeOfFalling) * 1.0) / CLOCKS_PER_SEC > 0.2 - log(lvl + 1) / 10.0)
+    if (((clock() - timeOfFalling) * 1.0) / CLOCKS_PER_SEC > 0.2 - log(lvl + 1) / 10.0)//povecavanje brzine padanja sa povecanjem nivoa
     {
 
-        trenutnoPadajuci.yPosition = trenutnoPadajuci.yPosition - 1;
-        if (doesThePieceHitTheWall(trenutnoPadajuci, fieldMatrixWall))
+        currentlyFallingTetromino
+    .yPosition = currentlyFallingTetromino
+    .yPosition - 1;
+        if (doesThePieceHitTheWall(currentlyFallingTetromino
+    , fieldMatrixWall)) //posmatramo slucaj gde se tetromino spusta nanize i gde udara u zid
         {
             if (!wallHit)
             {
                 wallHit = 1;
                 wallHitTime = time(NULL);
             }
-            trenutnoPadajuci.yPosition = trenutnoPadajuci.yPosition + 1;
-            if (difftime(time(NULL), wallHitTime) > 1)
+            currentlyFallingTetromino
+        .yPosition = currentlyFallingTetromino
+        .yPosition + 1;
+            if (difftime(time(NULL), wallHitTime) > 1) //ne zelimo da se tetromino odmah stopi sa zidom,
+                                                //da bi igrac bio u stanju da se pomera levo-desno i rotira 1 sekund
             {
                 indFellAfterSwitch = 1;
-                takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
-                insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
-                insertPieceIntoWall(trenutnoPadajuci, fieldMatrixWall);
+                takeOutTetrisPiece(currentlyFallingTetromino
+            , fieldMatrix);
+                insertPieceIntoField(currentlyFallingTetromino
+            , fieldMatrix);
+                insertPieceIntoWall(currentlyFallingTetromino
+            , fieldMatrixWall);
                 checkIfFiled(fieldMatrix, fieldMatrixWall);
-                trenutnoPadajuci = newTetrisPiece();
+                currentlyFallingTetromino
+             = newTetrisPiece();
                 wallHit = 0;
             }
         }
         else
         {
-            trenutnoPadajuci.yPosition = trenutnoPadajuci.yPosition + 1;
-            takeOutTetrisPiece(trenutnoPadajuci, fieldMatrix);
+            currentlyFallingTetromino
+        .yPosition = currentlyFallingTetromino
+        .yPosition + 1;
+            takeOutTetrisPiece(currentlyFallingTetromino
+        , fieldMatrix);
             wallHit = 0;
-            trenutnoPadajuci.yPosition = trenutnoPadajuci.yPosition - 1;
-            insertPieceIntoField(trenutnoPadajuci, fieldMatrix);
+            currentlyFallingTetromino
+        .yPosition = currentlyFallingTetromino
+        .yPosition - 1;
+            insertPieceIntoField(currentlyFallingTetromino
+        , fieldMatrix);
         }
         timeOfFalling = clock();
     }
@@ -439,7 +517,7 @@ static void on_timer(int value)
         glutTimerFunc(1, on_timer, 0);
 }
 
-static void on_reshape(int width, int height)
+static void on_reshape(int width, int height) //sa vezbi
 {
     /* Postavlja se viewport. */
     glViewport(0, 0, width, height);
@@ -458,13 +536,13 @@ static void on_display(void)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     gluLookAt(0, 0, 780, 0, 0, 0, 0, 1, 0);
-
+    //iscrtavanje pozadinske slike
     glBindTexture(GL_TEXTURE_2D, names[0]); //postavljanje izabrane pozadine za teksturu
     //iscrtavanje pozadinske teksture u formi quad-a
     glPushMatrix();
     glTranslatef(-720, -480, 0);
     glDisable(GL_DEPTH_TEST);
-    glBegin(GL_QUADS);
+    glBegin(GL_QUADS);//todo odvojiti obaj quad u zasebnu funkciju
     glNormal3f(0, 0, 1);
 
     glTexCoord2f(0, 0);
@@ -500,14 +578,14 @@ static void on_display(void)
     {
         glPushMatrix();
         glTranslatef(-400, 0, 0);
-        drawOnePiece(zamena.type, zamena.blockMatrix, 50, ugaoRotacije);
-        ugaoRotacije += 0.5;
+        drawOnePiece(switchTetromino.type, switchTetromino.blockMatrix, 50, angleOfRotation);
+        angleOfRotation += 0.5;
         glPopMatrix();
     }
 
     glColor3f(0, 0, 0);
 
-    //tekst: bodovi, nivo, unistene linije
+    //tekst: bodovi, nivo, unistene linije, pomoc, potpis
     char scoreString[30];
     char linesString[30];
     char levelString[30];
@@ -522,6 +600,7 @@ static void on_display(void)
     glColor3f(1, 1, 1);
     drawString(250, -390, 0, helpString);
     drawString(250, -420, 0, byString);
+    //meni za pomoc
     if (indHelpActivated)
     {
         glPushMatrix();
