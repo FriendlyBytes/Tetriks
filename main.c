@@ -41,12 +41,11 @@ int wallHit = 0;
 time_t wallHitTime;
 int score = 0;
 clock_t timeOfFalling;
-char scoreString[30];
-char linesString[30];
-char levelString[30];
+
 float ugaoRotacije = 0;
 int indSwitched = 0;
 int indFellAfterSwitch = 1;
+int indHelpActivated = 0;
 tetrisPiece t;
 
 int checkIfFiled(int matrix[fieldWidth][fieldHight], int matrixWall[fieldWidth + 2][fieldHight + 1])
@@ -194,27 +193,29 @@ static void on_keyboard(unsigned char key, int x, int y)
         exit(0);
         break;
     //TODO obrisi ovaj red kad budes animirala
-    case 'g':
-    case 'G':
+    case 's':
+    case 'S':
         /* Pokrece se simulacija. */
-        if (!timer_active)
+        if (!timer_active && !indHelpActivated)
         {
             glutTimerFunc(0, on_timer, 0);
             timer_active = 1;
         }
         break;
 
-    case 's':
-    case 'S':
+    case 'p':
+    case 'P':
     {
         /* Zaustavlja se simulacija. */
-        if (timer_active)
+        if (timer_active && !indHelpActivated)
             timer_active = 0;
         break;
     }
     case 'c':
     case 'C':
     {
+        if(timer_active)
+        {
         indSwitched = 1;
         
         if(indFellAfterSwitch)
@@ -228,34 +229,52 @@ static void on_keyboard(unsigned char key, int x, int y)
             zamena.yPosition = fieldHight;
             indFellAfterSwitch = 0;
         }
+        }
         break;
+    case 'h':
+    case 'H':
+    {
+        if(indHelpActivated)
+        {
+            indHelpActivated = 0;
+            glutTimerFunc(0, on_timer, 0);
+            timer_active = 1;
+        }
+        else
+        {
+            indHelpActivated = 1;
+            timer_active = 0;
+        }
+        glutPostRedisplay();
+        break;
+    }
     }
 
-    case 'p':
-    {
-        printf("{%d, %d}", obrisiMeX, obrisiMey);
-        break;
-    }
-    case 'k':
-    {
-        obrisiMey -=1;
-        break;
-    }
-    case 'i':
-    {
-        obrisiMey +=1;
-        break;
-    }
-    case 'j':
-    {
-        obrisiMeX -=1;
-        break;
-    }
-    case 'l':
-    {
-        obrisiMeX +=1;
-        break;
-    }
+    // case 'p':
+    // {
+    //     printf("{%d, %d}", obrisiMeX, obrisiMey);
+    //     break;
+    // }
+    // case 'k':
+    // {
+    //     obrisiMey -=1;
+    //     break;
+    // }
+    // case 'i':
+    // {
+    //     obrisiMey +=1;
+    //     break;
+    // }
+    // case 'j':
+    // {
+    //     obrisiMeX -=1;
+    //     break;
+    // }
+    // case 'l':
+    // {
+    //     obrisiMeX +=1;
+    //     break;
+    // }
     
     
     }
@@ -528,12 +547,49 @@ static void on_display(void)
     glColor3f(0, 0, 0);
 
     //tekst: bodovi, nivo, unistene linije
+    char scoreString[30];
+    char linesString[30];
+    char levelString[30];
+    char byString[30] = "Kristina Popovic, 2019";
+    char helpString[30] = "For help, press h";
     sprintf(scoreString, "Score: %d", score);
     sprintf(levelString, "Level: %d", lvl);
     sprintf(linesString, "Lines cleared: %d", numberOfClearedLines);
     drawString(-430, 150, 0, scoreString); 
     drawString(-430, 180, 0, levelString);
     drawString(-430, 210, 0, linesString);
+    glColor3f(1, 1, 1);
+    drawString(250, -390, 0, helpString);
+    drawString(250, -420, 0, byString);
+    if(indHelpActivated)
+    {
+        glPushMatrix();
+        glDisable(GL_DEPTH_TEST);
+        glScalef(1,0.8,1);
+        drawTransparentSqr(400,1,1,1,0.3);
+        glEnable(GL_DEPTH_TEST);
+        glPopMatrix();
+        glColor3f(0, 0, 0);
+        
+        char red1[30] = "HELP";
+        char red2[30] = "S - start game";
+        char red3[30] = "P - pause game";
+        char red4[30] = "C - change tetrimino";
+        char red5[50] = "Left and right keys - move left and right";
+        char red6[30] = "Up key - rotate";
+        char red7[30] = "Down key - go down faster";
+        char red8[30] = "H - enough help";
+        char red9[30] = "Esc - exit";
+        drawString(-20,130,0,red1);
+        drawString(-180,70,0,red2);
+        drawString(-180,40,0,red3);
+        drawString(-180,10,0,red4);
+        drawString(-180,-20,0,red5);
+        drawString(-180,-50,0,red6);
+        drawString(-180,-80,0,red7);
+        drawString(-180,-110,0,red8);
+        drawString(-180,-140,0,red9);
+    }
     /* Postavlja se nova slika u prozor. */
     glutSwapBuffers();
 }
