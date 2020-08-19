@@ -1,11 +1,11 @@
 PROGRAM = tetriks
-CC      = gcc
+CC      = gcc 
 CFLAGS  = -g -ansi -std=c11 -Wall -I/usr/X11R6/include -I/usr/pkg/include
-LDFLAGS = -L/usr/X11R6/lib -L/usr/pkg/lib
-LDLIBS  = -lglut -lGLU -lGL -lm
+LDFLAGS = -L/usr/X11R6/lib -L/usr/pkg/lib -no-pie 
+LDLIBS  = -lglut -lGLU -lGL -lm  
 
-$(PROGRAM): main.o image.o 
-	$(CC) $(LDFLAGS) -o $(PROGRAM)  image.o main.o $(LDLIBS)
+$(PROGRAM): image.o drawTetris.o
+	$(CC) $(LDFLAGS) -o $(PROGRAM) drawTetris.o image.o main.c $(LDLIBS)
 
 .PHONY: clean dist
 

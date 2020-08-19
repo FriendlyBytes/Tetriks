@@ -1,17 +1,18 @@
 #define _XOPEN_SOURCE 700
-#define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 #include <stdlib.h>
 #include <math.h>
 #include <GL/glut.h>
 #include <stdio.h>
-#include <time.h>
 
+#include <time.h>
 #include <unistd.h>
 //nije ceo program u sastav komentarima, samo ove globalne promenljive
 #include "drawTetris.h" //BUG imam bag (prenos parametara, negde koristim globalne promenljive 
                         // i treba da regulisem one define-ove na pocetku programa, ali rok je za dva sata :(
                         // mislila sam da je lako izdvojiti .c fajl iz .h sa funkcijama
 
+                        
 #include "image.h" // preuzeto sa casova vezbi
 
 #define FILENAME0 "slika32.bmp"
