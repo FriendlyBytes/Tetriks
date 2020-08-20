@@ -584,6 +584,7 @@ static void on_display(void)
     char scoreString[30];
     char linesString[30];
     char levelString[30];
+    char instructionString[30] = "Press S to start!";
     char byString[30] = "Kristina Popovic, 2019";
     char helpString[30] = "For help, press h";
     char gameOverString[30] = "GAME OVER";
@@ -591,11 +592,17 @@ static void on_display(void)
     sprintf(levelString, "Level: %d", lvl);
     sprintf(linesString, "Lines cleared: %d", numberOfClearedLines);
     if(gameOver)
-        drawString(-430, 120, 0, gameOverString);
+        drawString(0, 0, 0, gameOverString);
+    
     drawString(-430, 150, 0, scoreString);
     drawString(-430, 180, 0, levelString);
     drawString(-430, 210, 0, linesString);
     glColor3f(1, 1, 1);
+    if (!timer_active && !indHelpActivated && !gameOver)
+        drawString(0, 0, 0, instructionString);
+    if(gameOver)
+        drawString(0, 0, 0, gameOverString);
+    
     drawString(250, -390, 0, helpString);
     drawString(250, -420, 0, byString);
     //meni za pomoc
