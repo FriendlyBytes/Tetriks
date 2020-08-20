@@ -4,16 +4,11 @@
 #include <math.h>
 #include <GL/glut.h>
 #include <stdio.h>
-
 #include <time.h>
 #include <unistd.h>
-//nije ceo program u sastav komentarima, samo ove globalne promenljive
-#include "drawTetris.h" //BUG imam bag (prenos parametara, negde koristim globalne promenljive 
-                        // i treba da regulisem one define-ove na pocetku programa, ali rok je za dva sata :(
-                        // mislila sam da je lako izdvojiti .c fajl iz .h sa funkcijama
 
-                        
-#include "image.h" // preuzeto sa casova vezbi
+#include "drawTetris.h" 
+#include "image.h"
 
 #define FILENAME0 "slika32.bmp"
 static GLuint names[1];// sadrzi teksture
@@ -33,19 +28,15 @@ static void on_display(void);
 static void SpecialInput(int key, int x, int y);
 int fieldMatrix[fieldWidth][fieldHight] = {};             // matrica koja predstavlja stanje trenutne partije tetrisa (sadrzi boje polja)
 int fieldMatrixWall[fieldWidth + 2][fieldHight + 1] = {0}; // matrica koja sluzi kao omotac prethodne matrice
-                                                           // i koja oznacava gde su granice gde tetromino moze da se pomera
-                                                           // tj zid koji tetromino ne moze da prodje
+
 // indikatori za pritisnute dugmice
 int upKeyIsPressed = 0;
 int downKeyIsPressed = 0;
-
 int score = 0;// rezultat
 int lvl = 0;// nivo
 int numberOfClearedLines = 0;//  broj popunjenih linija koje su obrisane
-
 int wallHit = 0; // indikator da li trenutno tetromino udara u
 time_t wallHitTime;// vreme kada je tetromino udario u zid
-
 clock_t timeOfFalling;//vreme kada se tetromino pomerio za jednu poziciju dole poslednji put
 
 
