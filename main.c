@@ -45,7 +45,7 @@ float angleOfRotation = 0;//ugao rotacije tetromina sa leve strane
 int indSwitched = 0;// da li je zamenjen tetromino sa tetrominom koji stoji sa leve strane na pocetku igre
 int indFellAfterSwitch = 1;// da li je tetromino za pao posle zamene (ako nije, ne moze ponovo da se menja)
 int indHelpActivated = 0;//da li je korisnik aktivirao pomocni meni
-
+int gameOver = 0;
 
 int checkIfFiled(int matrix[fieldWidth][fieldHight], int matrixWall[fieldWidth + 2][fieldHight + 1])//provera da li je red popunjen
 {
@@ -99,7 +99,10 @@ int checkIfEndOfGame(int matrixWall[fieldWidth + 2][fieldHight + 1])
     int i;
     for (i = 1; i < fieldWidth + 1; i++)
         if (matrixWall[i][fieldHight - 4])
+        {
+            gameOver = 1;
             return 1;
+        }
     return 0;
 }
 
@@ -583,9 +586,12 @@ static void on_display(void)
     char levelString[30];
     char byString[30] = "Kristina Popovic, 2019";
     char helpString[30] = "For help, press h";
+    char gameOverString[30] = "GAME OVER";
     sprintf(scoreString, "Score: %d", score);
     sprintf(levelString, "Level: %d", lvl);
     sprintf(linesString, "Lines cleared: %d", numberOfClearedLines);
+    if(gameOver)
+        drawString(-430, 120, 0, gameOverString);
     drawString(-430, 150, 0, scoreString);
     drawString(-430, 180, 0, levelString);
     drawString(-430, 210, 0, linesString);
